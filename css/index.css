@@ -1,0 +1,29 @@
+.center {
+    margin: 0 !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    -ms-transform: translate(-50%, -50%) !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+#md-form-r input[type='text']:focus:not([readonly]) {
+    box-shadow: 0 1px 0 0 red !important;
+    border-bottom: 1px solid red !important;
+}
+#md-form-r input[type='text']:focus:not([readonly]) + label {
+    color: red !important;
+}
+
+.card {
+    background-color: #4285F4 !important; 
+    margin-top: 15px !important;
+}
+
+.card-title {
+    font-size: 35px !important;
+}
+
+.card-question {
+    font-size: 20px !important;
+}

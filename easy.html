@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--<link rel="icon" href="img/mdb-favicon.ico" type="image/x-icon"> -->
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.11.2/css/all.css">
+    <!-- Google Fonts Roboto -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+    <link rel="stylesheet" href="vendor/css/bootstrap.min.css">
+    <!-- Material Design Bootstrap -->
+    <link rel="stylesheet" href="vendor/css/mdb.min.css">
+    <!-- Your custom styles (optional) -->
+    <link rel="stylesheet" href="vendor/css/style.css">
+    <link rel="stylesheet" href="css/index.css">
+    <title>MATH26</title>
+</head>
+<body>
+    <div id="app">
+        <div class="d-flex justify-content-center">
+            <div class="col-md-6">
+                <div class="card card-image">
+                    <div class="text-white py-3 px-4"><!--text-center d-flex align-items-center-->
+                        <div id="q-ref" q-ref="">
+                            <h3 class="card-title pt-2 text-center card-title">
+                                <strong id="question-number"></strong>
+                            </h3>
+                            <div class="text-center">
+                                <p class="card-question" id="question"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-center">
+            <div class="md-form" id="md-form">
+                <input type="number" id="form1" class="form-control" v-model="currentAnswer" type="number" v-on:input="check(currentAnswer)" required>
+                <label for="form1">Answer</label>
+            </div>
+        </div>
+        <div class="d-flex justify-content-center">
+            <p id="answer"></p>
+        </div>
+
+        <!--<qcard></qcard>-->
+        <!--<boxanswer></boxanswer>-->
+    </div>
+
+    <script type="text/javascript" src="vendor/js/jquery.min.js"></script>
+    <!-- Bootstrap tooltips -->
+    <script type="text/javascript" src="vendor/js/popper.min.js"></script>
+    <!-- Bootstrap core JavaScript -->
+    <script type="text/javascript" src="vendor/js/bootstrap.min.js"></script>
+    <!-- MDB core JavaScript -->
+    <script type="text/javascript" src="vendor/js/mdb.min.js"></script>
+    <script src="cordova.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script src="component/card.js"></script>
+    <script src="component/answer.js"></script>
+    <!--<script src="js/index.js"></script>-->
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                json: null,
+                answerJson: null,
+                imagesJson: null,
+                currentAnswer: null,
+                answerText: "",
+                randomData: [],
+                currentSubQuestion: 0,
+                currentQuestion: 0,
+                currectQuestionFake: 0
+            },
+            created: function () {
+                fetch("database/question.json")
+                    .then(r => r.json())
+                    .then(json => {
+                        this.json=json;
+                        fetch("database/answer.json")
+                            .then(r => r.json())
+                            .then(json => {
+                                this.answerJson=json;
+                                fetch("database/images.json")
+                                    .then(r => r.json())
+                                    .then(json => {
+                                    this.imagesJson=json;
+
+                                    const questionNow = this.RandomQuestion();
+                                    const Qelement = document.getElementById("question");
+                                    const Qnumber = document.getElementById("question-number");
+                                    const showAnswer = document.getElementById("answer");
+
+                                    this.currectQuestionFake++;
+                                    Qelement.innerHTML = this.currentSubQuestion + 1 + ". " + this.json.easy["Q" + questionNow][this.currentSubQuestion] + `<br>`;
+                                    Qnumber.innerHTML = `โจทย์ข้อที่ ${this.currectQuestionFake}`;
+                                    showAnswer.innerHTML = `คำตอบ : ?`;
+                                });
+                        });
+                });
+            },
+            methods: {
+                check(currentAnswer) {
+                    const Qelement = document.getElementById("question");
+                    const Aelement = document.getElementById("form1");
+                    const checkBox = document.getElementById('md-form');
+                    if(currentAnswer == this.answerJson.number.easy["Q" + this.currentQuestion][this.currentSubQuestion]){
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            onOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                Aelement.disabled = true;
+                            },
+                            onClose: this.AfterCheck
+                        })
+
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Correct, Next Question!'
+                        })
+                    }else{
+                        if(checkBox){
+                            checkBox.id = 'md-form-r';
+                            Aelement.disabled = false;
+                            Aelement.value = "";
+                            Aelement.focus();
+                        }else{
+                            Aelement.disabled = false;
+                            Aelement.value = "";
+                            Aelement.focus();
+                        }
+                    }
+                },
+                RandomQuestion() { 
+                    let questionLength = Object.keys(this.json.easy).length;
+                    let questionRandom = Math.floor(Math.random() * questionLength) + 1;
+                    if(this.randomData.indexOf(questionRandom) === -1){
+                        this.randomData.push(questionRandom);
+                        this.currentQuestion = questionRandom;
+                        return questionRandom;
+                    }else{
+                        if(this.randomData.length !== questionLength){
+                            this.RandomQuestion();
+                        }else{
+                            Swal.fire({
+                                title: 'Good job!',
+                                text: "Out of questions",
+                                icon: 'success',
+                            }).then((result) => {
+                                if (result.value) {
+                                    window.location.replace('index.html');
+                                }else{
+                                    window.location.replace('index.html');
+                                }
+                            })
+                        }
+                    }
+                },
+                AfterCheck(){
+                    const Qelement = document.getElementById("question");
+                    const Aelement = document.getElementById("form1");
+                    const checkBox = document.getElementById('md-form');
+                    const checkBoxRed = document.getElementById('md-form-r');
+                    const Qnumber = document.getElementById("question-number");
+                    const showAnswer = document.getElementById("answer");
+                    
+                    this.answerText = this.answerText + this.answerJson.text.easy["Q" + this.currentQuestion][this.currentSubQuestion];
+                    this.currentSubQuestion++;
+                    
+                    if(this.json.easy["Q" + this.currentQuestion].length === this.currentSubQuestion){
+                        showAnswer.innerHTML = `คำตอบ : ${this.answerText}`;
+                        Swal.fire({
+                            title: `Correct!, The answer is ${this.answerText}`,
+                            showConfirmButton: true,
+                            showCancelButton: true,
+                            confirmButtonText: 'Next',
+                            cancelButtonText: 'Go back',
+                            cancelButtonColor: '#ff0000',
+                            imageUrl: this.imagesJson.easy["Q" + this.currentQuestion],
+                            imageWidth: 400,
+                            imageHeight: 200
+                        }).then((result) => {
+                            if(result.isConfirmed){
+                                this.currectQuestionFake++;
+                                this.answerText = "";
+                                showAnswer.innerHTML = `คำตอบ : ?`;
+                                this.RandomQuestion();
+                                this.currentSubQuestion = 0;
+                                Qelement.innerHTML = this.currentSubQuestion + 1 + ". " + this.json.easy["Q" + this.currentQuestion][this.currentSubQuestion] + `<br>`;
+                                Qnumber.innerHTML = `โจทย์ข้อที่ ${this.currectQuestionFake}`;
+                                if(checkBox){
+                                    Aelement.value = "";
+                                    Aelement.disabled = false;
+                                    Aelement.focus();
+                                }else{
+                                    checkBoxRed.id = 'md-form';
+                                    Aelement.value = "";
+                                    Aelement.disabled = false;
+                                    Aelement.focus();
+                                }
+                            }else{
+                                window.location.replace('index.html');
+                            }
+                        })
+                    }else{
+                        showAnswer.innerHTML = `คำตอบ : ${this.answerText}`;
+                        Qelement.innerHTML = this.currentSubQuestion + 1 + ". " + this.json.easy["Q" + this.currentQuestion][this.currentSubQuestion] + `<br>`;
+                        Aelement.disabled = false;
+                        Aelement.focus();
+                        if(checkBox){
+                            Aelement.value = "";
+                            Aelement.disabled = false;
+                            Aelement.focus();
+                        }else{
+                            checkBoxRed.id = 'md-form';
+                            Aelement.value = "";
+                            Aelement.disabled = false;
+                            Aelement.focus();
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
